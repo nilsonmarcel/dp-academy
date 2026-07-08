@@ -1,0 +1,6 @@
+{
+  "name": "DP Academy",
+  "description": "Website premium para a DP Academy, referência regional em Jiu-Jitsu e Musculação em Salto-SP.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
