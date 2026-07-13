@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Menu, X, Dumbbell, Shield, Phone } from "lucide-react";
+
 
 interface HeaderProps {
   onOpenModal: () => void;
@@ -8,17 +9,81 @@ interface HeaderProps {
 export default function Header({ onOpenModal }: HeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
 
+
+  // =========================
+  // Header Scroll Effect
+  // =========================
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 20) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
+      setScrolled(window.scrollY > 20);
+    };
+
+    handleScroll();
+
+    window.addEventListener("scroll", handleScroll);
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // =========================
+  // Header Height
+  // =========================
+  useEffect(() => {
+    const updateHeaderHeight = () => {
+      if (headerRef.current) {
+        setHeaderHeight(headerRef.current.offsetHeight);
       }
     };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+
+    updateHeaderHeight();
+
+    window.addEventListener("resize", updateHeaderHeight);
+
+    return () => window.removeEventListener("resize", updateHeaderHeight);
+  }, [scrolled]);
+
+  // =========================
+  // Lock Body Scroll
+  // =========================
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? "hidden" : "";
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
+  // =========================
+  // Close on Resize
+  // =========================
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsOpen(false);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // =========================
+  // Close on ESC
+  // =========================
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   const navLinks = [
@@ -33,12 +98,14 @@ export default function Header({ onOpenModal }: HeaderProps) {
 
   return (
     <header
+      ref={headerRef}
       id="header-nav"
-      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
-        scrolled
-          ? "bg-[#050505]/95 backdrop-blur-md py-4 border-b border-white/10 shadow-lg"
+      className={`fixed top-0 left-0 w-full z-50 transition-[background-color,padding,backdrop-filter,box-shadow,border-color]
+        duration-300
+        ease-in-out ${scrolled || isOpen
+          ? "bg-[#050505] py-6 border-b border-white/10 shadow-lg"
           : "bg-transparent py-6"
-      }`}
+        }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
@@ -108,11 +175,19 @@ export default function Header({ onOpenModal }: HeaderProps) {
         </div>
       </div>
 
+
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/60 lg:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
       {/* Mobile Drawer */}
       <div
-        className={`lg:hidden fixed inset-0 top-[73px] z-40 bg-[#050505]/98 backdrop-blur-lg border-t border-white/10 transition-all duration-300 transform ${
-          isOpen ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"
-        }`}
+        style={{ top: headerHeight }}
+        className={`lg:hidden fixed inset-0 z-40 bg-[#050505] border-t border-white/10 transition-transform transition-opacity duration-300 transform 
+          ${isOpen ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"
+          }`}
       >
         <div className="px-6 py-8 space-y-6 flex flex-col justify-between h-[calc(100vh-100px)]">
           <nav className="flex flex-col space-y-5">
